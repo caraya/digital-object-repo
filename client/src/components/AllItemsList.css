@@ -1,0 +1,88 @@
+.search-container {
+  margin-top: 20px;
+}
+
+.results-container {
+  margin-top: 15px;
+  overflow-x: auto; /* For smaller screens */
+}
+
+.items-grid {
+  display: grid;
+  grid-template-columns: 80px 2fr 1fr 1fr; /* Adjust column widths as needed */
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  margin-top: 15px;
+}
+
+.grid-header {
+  display: contents; /* Makes the children direct members of the grid */
+}
+
+.grid-header > div {
+  font-weight: bold;
+  padding: 12px;
+  background-color: #f2f2f2;
+  border-bottom: 2px solid #ddd;
+}
+
+.grid-cell {
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  min-width: 0; /* Prevents content from overflowing */
+}
+
+.grid-cell a {
+  text-decoration: none;
+  color: #007bff;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.grid-cell a:hover {
+  text-decoration: underline;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+}
+
+.action-button {
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  display: inline-block;
+  text-align: center;
+  border: none;
+}
+
+.action-button:hover {
+  background-color: #0056b3;
+  color: white;
+  text-decoration: none;
+}
+
+.delete-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.delete-button:hover {
+  background-color: #c82333;
+}

@@ -1,0 +1,74 @@
+.usage-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.usage-container a {
+  text-decoration: none;
+  color: #007bff;
+  margin-bottom: 20px;
+  display: inline-block;
+}
+
+.totals-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.summary-card {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.summary-card h2 {
+  margin-top: 0;
+  font-size: 1.2em;
+  color: #495057;
+}
+
+.summary-card p {
+  font-size: 2em;
+  font-weight: bold;
+  color: #212529;
+  margin: 10px 0 0;
+}
+
+.usage-table-container {
+  overflow-x: auto;
+}
+
+.usage-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.usage-table th,
+.usage-table td {
+  border: 1px solid #dee2e6;
+  padding: 12px;
+  text-align: left;
+}
+
+.usage-table thead {
+  background-color: #f2f2f2;
+}
+
+.usage-table th {
+  font-weight: 600;
+}
+
+.usage-table tbody tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.usage-table tbody tr:hover {
+  background-color: #e9ecef;
+}

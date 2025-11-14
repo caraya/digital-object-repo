@@ -1,0 +1,125 @@
+.document-detail-container {
+  padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.document-detail-container a {
+  text-decoration: none;
+  color: #007bff;
+  margin-bottom: 20px;
+  display: inline-block;
+}
+
+.document-meta {
+  font-size: 0.9em;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.video-container {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  height: 0;
+  overflow: hidden;
+  max-width: 100%;
+  background: #000;
+  margin-bottom: 20px;
+}
+
+.video-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.document-content {
+  white-space: pre-wrap; /* Allows text to wrap */
+  word-wrap: break-word; /* Breaks long words */
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 5px;
+  border: 1px solid #e9ecef;
+  font-family: 'Courier New', Courier, monospace;
+  line-height: 1.5;
+}
+
+.insights-panel {
+  background-color: #fdfdfd;
+  border: 1px solid #eee;
+  border-radius: 5px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.insights-panel h2 {
+  margin-top: 0;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.insights-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.action-button {
+  background-color: #28a745;
+  color: white !important; /* Override default link color */
+  text-decoration: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  font-size: 1em;
+  transition: background-color 0.2s;
+  display: inline-block;
+  text-align: center;
+}
+
+.action-button:hover {
+  background-color: #218838;
+}
+
+.insights-panel button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.2s;
+}
+
+.insights-panel button:hover {
+  background-color: #0056b3;
+}
+
+.insights-panel button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.summary-content {
+  margin-top: 15px;
+  background-color: #eef7ff;
+  padding: 15px;
+  border-radius: 4px;
+  border-left: 4px solid #007bff;
+}
+
+.summary-content h3 {
+  margin-top: 0;
+}
+
+.error-message {
+  color: #d9534f;
+  background-color: #f2dede;
+  border: 1px solid #ebccd1;
+  padding: 10px;
+  border-radius: 4px;
+  margin-top: 10px;
+}
