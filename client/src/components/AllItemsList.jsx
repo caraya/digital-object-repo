@@ -28,6 +28,13 @@ function AllItemsList() {
 
   useEffect(() => {
     fetchAllItems();
+
+    const handleItemAdded = () => fetchAllItems();
+    window.addEventListener('itemAdded', handleItemAdded);
+
+    return () => {
+      window.removeEventListener('itemAdded', handleItemAdded);
+    };
   }, []);
 
   const handleDelete = async (id) => {
@@ -49,7 +56,7 @@ function AllItemsList() {
   };
 
   return (
-    <div className="search-container">
+    <div className="all-items-container">
       <h2>All Items</h2>
       {error && <p className="error-message">{error}</p>}
       
@@ -63,34 +70,34 @@ function AllItemsList() {
               <div role="columnheader">Actions</div>
             </div>
             {allItems.map((item) => {
-              const isUrl = item.file_path && item.file_path.startsWith('http');
+              let itemType;
+              if (item.source_url && item.source_url.startsWith('http')) {
+                itemType = 'URL';
+              } else if (item.mime_type === 'text/plain') {
+                itemType = 'Text';
+              } else {
+                itemType = 'File';
+              }
+
               return (
                 <React.Fragment key={item.id}>
-                  <div className="grid-cell" role="cell">{isUrl ? 'URL' : 'File'}</div>
+                  <div className="grid-cell" role="cell">{itemType}</div>
                   <div className="grid-cell" role="cell">
-                    <Link to={`/documents/${item.id}`}>{item.title || item.file_path}</Link>
+                    <Link to={`/documents/${item.id}`}>{item.title || item.file_path || item.source_url || 'Untitled'}</Link>
                   </div>
                   <div className="grid-cell" role="cell">{new Date(item.created_at).toLocaleDateString()}</div>
                   <div className="grid-cell actions-cell" role="cell">
                     <Link to={`/documents/${item.id}`} className="action-button">View Details</Link>
-                    {isUrl ? (
+                    {itemType === 'URL' && (
                       <a 
-                        href={item.file_path}
+                        href={item.source_url}
                         className="action-button"
                         target="_blank"
                         rel="noopener noreferrer"
                       >
                         View Original
                       </a>
-                    ) : (
-                      <a 
-                        href={`/api/documents/${item.id}/download`} 
-                        className="action-button"
-                        download
-                        >
-                          Download
-                        </a>
-                      )}
+                    )}
                     <button onClick={() => setModalOpenFor(item.id)} className="action-button">
                       Add to Notebook
                     </button>

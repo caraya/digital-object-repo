@@ -6,6 +6,7 @@ import urlRoutes from './routes/urls.js';
 import documentRoutes from './routes/documents.js';
 import usageRoutes from './routes/usage.js';
 import notebookRoutes from './routes/notebooks.js';
+import textRoutes from './routes/texts.js';
 
 const fastify = Fastify({
   logger: true,
@@ -20,6 +21,7 @@ fastify.register(urlRoutes, { prefix: '/api' });
 fastify.register(documentRoutes, { prefix: '/api' });
 fastify.register(usageRoutes, { prefix: '/api' });
 fastify.register(notebookRoutes, { prefix: '/api' });
+fastify.register(textRoutes, { prefix: '/api' });
 
 fastify.get('/', async (request, reply) => {
   return { hello: 'world' };

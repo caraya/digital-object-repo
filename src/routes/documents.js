@@ -77,8 +77,8 @@ async function routes(fastify, options) {
       }
 
       const { rows } = await pool.query(
-        'INSERT INTO documents (title, content, embedding, file_path) VALUES ($1, $2, $3, $4) RETURNING id, title, created_at',
-        [title, fullContent, pgvector.toSql(embedding), filePath]
+        'INSERT INTO documents (title, content, embedding, file_path, mime_type) VALUES ($1, $2, $3, $4, $5) RETURNING id, title, created_at',
+        [title, fullContent, pgvector.toSql(embedding), filePath, mimetype]
       );
 
       return reply.status(201).send(rows[0]);
@@ -129,7 +129,9 @@ async function routes(fastify, options) {
           id, 
           title, 
           created_at, 
-          file_path
+          file_path,
+          source_url,
+          mime_type
          FROM documents
          ORDER BY created_at DESC`
       );
@@ -225,7 +227,7 @@ async function routes(fastify, options) {
     const { id } = request.params;
     try {
       const { rows } = await pool.query(
-        'SELECT file_path, title FROM documents WHERE id = $1',
+        'SELECT file_path, title, mime_type FROM documents WHERE id = $1',
         [id]
       );
 
@@ -233,12 +235,17 @@ async function routes(fastify, options) {
         return reply.status(404).send({ error: 'File not found or no file path recorded.' });
       }
 
-      const { file_path, title } = rows[0];
+      const { file_path, title, mime_type } = rows[0];
       const stream = fs.createReadStream(file_path);
       
-      // Use the original filename for the download
       const originalFilename = path.basename(title); 
 
+      // If it's a video, we want to stream it, not force download.
+      if (mime_type && mime_type.startsWith('video/')) {
+        return reply.header('Content-Type', mime_type).send(stream);
+      }
+
+      // For all other file types, force download.
       return reply.header('Content-Disposition', `attachment; filename="${originalFilename}"`).send(stream);
     } catch (error) {
       logger.error(`Error downloading document ${id}:`, error);
@@ -251,7 +258,7 @@ async function routes(fastify, options) {
 
     try {
       const { rows } = await pool.query(
-        'SELECT id, title, content, created_at, file_path FROM documents WHERE id = $1',
+        'SELECT id, title, content, created_at, updated_at, file_path, source_url, mime_type FROM documents WHERE id = $1',
         [id]
       );
 

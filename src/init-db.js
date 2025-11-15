@@ -22,16 +22,40 @@ const initDb = async () => {
     logger.info('pgvector extension created or already exists.');
 
     await client.query(`
+      CREATE OR REPLACE FUNCTION update_updated_at_column()
+      RETURNS TRIGGER AS $$
+      BEGIN
+          NEW.updated_at = NOW();
+          RETURN NEW;
+      END;
+      $$ language 'plpgsql';
+    `);
+    logger.info('Trigger function "update_updated_at_column" created or already exists.');
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS documents (
         id SERIAL PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
         content TEXT,
         embedding vector(1536),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        file_path VARCHAR(1024)
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        source_url VARCHAR(2048),
+        file_path VARCHAR(1024),
+        mime_type VARCHAR(255)
       );
     `);
     logger.info('Table "documents" created or already exists.');
+
+    // Drop existing trigger if it exists, then create it.
+    await client.query('DROP TRIGGER IF EXISTS update_documents_updated_at ON documents;');
+    await client.query(`
+      CREATE TRIGGER update_documents_updated_at
+      BEFORE UPDATE ON documents
+      FOR EACH ROW
+      EXECUTE PROCEDURE update_updated_at_column();
+    `);
+    logger.info('Trigger "update_documents_updated_at" created.');
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS urls (
@@ -40,7 +64,7 @@ const initDb = async () => {
         title VARCHAR(255),
         description TEXT,
         content TEXT,
-embedding vector(1536),
+        embedding vector(1536),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -80,6 +104,16 @@ embedding vector(1536),
       );
     `);
     logger.info('Table "notebooks" created or already exists.');
+
+    // Drop existing trigger if it exists, then create it.
+    await client.query('DROP TRIGGER IF EXISTS update_notebooks_updated_at ON notebooks;');
+    await client.query(`
+      CREATE TRIGGER update_notebooks_updated_at
+      BEFORE UPDATE ON notebooks
+      FOR EACH ROW
+      EXECUTE PROCEDURE update_updated_at_column();
+    `);
+    logger.info('Trigger "update_notebooks_updated_at" created.');
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS notebook_documents (

@@ -124,16 +124,12 @@ function DocumentDetailPage() {
   }
 
   const youTubeId = getYouTubeId(document.source_url);
+  const isVideo = document.mime_type && document.mime_type.startsWith('video/');
 
   return (
     <div className="document-detail-container">
       <Link to="/" className="back-link">&larr; Back to All Items</Link>
-      <div className="detail-page-header">
-        <h1>{document.title}</h1>
-        <button onClick={() => setIsModalOpen(true)} className="add-to-notebook-button">
-          Add to Notebook
-        </button>
-      </div>
+
       <div className="document-meta">
         <p>Document ID: {document.id}</p>
         <p>Created at: {new Date(document.created_at).toLocaleString()}</p>
@@ -141,15 +137,36 @@ function DocumentDetailPage() {
         {document.source_url && <p>Source: <a href={document.source_url} target="_blank" rel="noopener noreferrer">{document.source_url}</a></p>}
       </div>
 
+      <div className="document-actions">
+        {document.source_url && (
+            <a href={document.source_url} className="action-button" target="_blank" rel="noopener noreferrer">
+                View Original
+            </a>
+        )}
+        <button onClick={() => setIsModalOpen(true)} className="action-button">
+          Add to Notebook
+        </button>
+        <button onClick={handleDelete} className="delete-button">Delete Item</button>
+      </div>
+
       {youTubeId && (
         <div className="video-container">
           <iframe
+            width="560"
+            height="315"
             src={`https://www.youtube.com/embed/${youTubeId}`}
             frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             title="Embedded YouTube Video"
           ></iframe>
+        </div>
+      )}
+
+      {isVideo && (
+        <div className="video-container">
+          <video controls src={`/api/documents/${document.id}/download`} type={document.mime_type} key={document.id}>
+            Your browser does not support the video tag.
+          </video>
         </div>
       )}
 

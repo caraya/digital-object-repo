@@ -1,0 +1,30 @@
+.text-form {
+  border: 2px dashed #ccc;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #fff;
+  box-sizing: border-box;
+}
+
+.text-form h2 {
+  margin-top: 0;
+}
+
+.text-form .form-group {
+  margin-bottom: 15px;
+}
+
+.text-form label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.text-form input,
+.text-form textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}

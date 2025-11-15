@@ -29,8 +29,8 @@ async function routes(fastify, options) {
       }
 
       const { rows } = await pool.query(
-        'INSERT INTO documents (title, content, embedding, file_path) VALUES ($1, $2, $3, $4) RETURNING *',
-        [title || url, truncatedContent, pgvector.toSql(embedding), url]
+        'INSERT INTO documents (title, content, embedding, source_url, mime_type) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        [title || url, truncatedContent, pgvector.toSql(embedding), url, 'text/html']
       );
 
       return reply.status(201).send(rows[0]);

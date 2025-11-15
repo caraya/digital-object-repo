@@ -128,3 +128,37 @@ button:disabled {
 .search-result-item h3 {
   margin-top: 0;
 }
+
+.home-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 40px;
+  align-items: start;
+}
+
+.left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.right-column {
+  width: 100%;
+}
+
+.left-column .forms-container {
+  flex-direction: column;
+  width: 100%;
+}
+
+.left-column .file-upload,
+.left-column .url-form,
+.left-column .search-container {
+  width: 100%;
+  max-width: none;
+}
+
+.left-column .divider {
+  width: 100%;
+  margin: 20px 0;
+}

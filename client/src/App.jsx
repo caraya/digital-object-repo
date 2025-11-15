@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import FileUpload from './components/FileUpload';
 import UrlForm from './components/UrlForm';
+import TextForm from './components/TextForm';
 import Search from './components/Search';
 import AllItemsList from './components/AllItemsList';
 import DocumentDetailPage from './pages/DocumentDetailPage';
@@ -9,19 +10,24 @@ import UsagePage from './pages/UsagePage';
 import NotebooksPage from './pages/NotebooksPage';
 import NotebookDetailPage from './pages/NotebookDetailPage';
 import './App.css';
+import './components/TextForm.css';
 
 function HomePage() {
   return (
-    <>
-      <div className="forms-container">
-        <FileUpload />
-        <UrlForm />
+    <div className="home-grid">
+      <div className="left-column">
+        <div className="forms-container">
+          <FileUpload />
+          <UrlForm />
+          <TextForm />
+        </div>
+        <hr className="divider" />
+        <Search />
       </div>
-      <hr className="divider" />
-      <Search />
-      <hr className="divider" />
-      <AllItemsList />
-    </>
+      <div className="right-column">
+        <AllItemsList />
+      </div>
+    </div>
   );
 }
 
