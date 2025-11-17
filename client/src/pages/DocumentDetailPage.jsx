@@ -125,6 +125,7 @@ function DocumentDetailPage() {
 
   const youTubeId = getYouTubeId(document.source_url);
   const isVideo = document.mime_type && document.mime_type.startsWith('video/');
+  const isFile = !document.source_url;
 
   return (
     <div className="document-detail-container">
@@ -142,6 +143,11 @@ function DocumentDetailPage() {
             <a href={document.source_url} className="action-button" target="_blank" rel="noopener noreferrer">
                 View Original
             </a>
+        )}
+        {isFile && (
+          <a href={`/api/documents/${document.id}/download`} className="action-button" download>
+            Download File
+          </a>
         )}
         <button onClick={() => setIsModalOpen(true)} className="action-button">
           Add to Notebook
