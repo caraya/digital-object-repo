@@ -1,13 +1,15 @@
 {
   "name": "digital-object-repo",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A digital object repository with vector search and AI features.",
   "main": "src/server.js",
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "db:init": "node src/init-db.js"
+    "db:init": "node src/init-db.js",
+    "db:export": "node scripts/export-db.js",
+    "db:import": "node scripts/import-db.js"
   },
   "keywords": [
     "ai",
@@ -16,8 +18,8 @@
     "openai",
     "fastify"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Carlos Araya <carlos.araya@gmail.com>",
+  "license": " MIT",
   "dependencies": {
     "@fastify/multipart": "^8.3.1",
     "@fastify/static": "^7.0.4",

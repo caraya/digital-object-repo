@@ -40,10 +40,45 @@ graph TD
     * `app`: The Node.js backend running on Fastify.
     * `client`: The React frontend served by Vite's development server.
 
+    ```yaml
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        # ... configuration ...
+      
+      db-init:
+        build: .
+        command: sh -c "npm install && node src/init-db.js"
+        depends_on:
+          postgres:
+            condition: service_healthy
+
+      app:
+        build: .
+        depends_on:
+          db-init:
+            condition: service_completed_successfully
+    ```
+
 2. **Backend Foundation (Node.js/Fastify)**:
     * A Fastify server was created to handle API requests.
     * Database connection logic was implemented using the `pg` library.
     * A critical `db-init` service was added to the Docker Compose setup. This service runs `src/init-db.js` to create the necessary database tables (`documents`, `api_usage_logs`, etc.) only after the `postgres` service is healthy, solving a common race condition during startup.
+
+    ```javascript
+    // src/init-db.js
+    await client.query('CREATE EXTENSION IF NOT EXISTS vector;');
+    
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS documents (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        content TEXT,
+        embedding vector(1536),
+        // ... other fields
+      );
+    `);
+    ```
 
 3. **Content Ingestion & Processing**:
     * **File Uploads**: An endpoint (`/api/documents/upload`) was created using `@fastify/multipart` to handle file uploads. The original files are stored in the `./uploads` directory.
@@ -82,7 +117,34 @@ graph TD
 
 1. **Setup**: The frontend was initialized as a React project using Vite, providing a fast development experience with Hot Module Replacement (HMR).
 2. **Main View (`AllItemsList.jsx`)**: This component fetches all items from the `/api/documents` endpoint and displays them in a grid. It also includes the `FileUpload` and `UrlForm` components for adding new content.
+
+    ```jsx
+    // client/src/components/AllItemsList.jsx
+    const fetchAllItems = async () => {
+      try {
+        const response = await fetch('/api/documents');
+        const items = await response.json();
+        // Sort all items by creation date, newest first
+        items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        setAllItems(items);
+      } catch (err) {
+        setError(err.message);
+      }
+    };
+    ```
+
 3. **Detail View (`DocumentDetailPage.jsx`)**: Clicking an item navigates the user to its dedicated page. This component fetches detailed information for a single document, including its extracted content, which is rendered as Markdown using `react-markdown`.
+
+    ```jsx
+    // client/src/pages/DocumentDetailPage.jsx
+    import ReactMarkdown from 'react-markdown';
+
+    // ... inside component return
+    <div className="document-content">
+      <ReactMarkdown>{document.content}</ReactMarkdown>
+    </div>
+    ```
+
 4. **Styling**: A combination of global CSS and component-specific stylesheets (`.css` files) were used to style the application, focusing on a clean and responsive layout.
 
 ## Phase 3: The Notebook Feature (A Feature Deep-Dive)
@@ -100,6 +162,49 @@ The "Notebooks" feature was the most significant addition, allowing users to gro
     * `POST /api/notebooks/:id/documents`: Add a document to a notebook.
     * `POST /api/notebooks/:id/query`: The core Q&A endpoint using Retrieval-Augmented Generation (RAG).
 
+### Hybrid Search: Merging Full-Text and Vector Search
+
+To improve search accuracy, the system implements a **Hybrid Search** strategy that combines the strengths of two different retrieval methods:
+
+1. **Semantic Search (Vector Search)**:
+    * **How it works**: Uses OpenAI embeddings and `pgvector`'s cosine distance (`<=>`) to find documents that are *conceptually* similar to the query, even if they don't share the exact same words.
+    * **Strength**: Great for understanding intent and finding related concepts (e.g., searching for "canine" finds documents about "dogs").
+    * **Weakness**: Can sometimes miss exact keyword matches or specific technical terms.
+
+2. **Keyword Search (Full-Text Search)**:
+    * **How it works**: Uses PostgreSQL's built-in `tsvector` and `tsquery` capabilities. It tokenizes the text, removes stop words, and stems words (e.g., "running" becomes "run") to find exact text matches.
+    * **Strength**: Excellent for finding specific names, acronyms, or exact phrases.
+    * **Weakness**: Fails if the user uses synonyms or different phrasing.
+
+**The Fusion Algorithm (Reciprocal Rank Fusion)**:
+The system combines these two results using **Reciprocal Rank Fusion (RRF)**.
+
+```sql
+WITH semantic_search AS (
+    SELECT id, title, RANK() OVER (ORDER BY embedding <=> $1) as rank
+    FROM documents
+    ORDER BY embedding <=> $1
+    LIMIT 50
+),
+keyword_search AS (
+    SELECT id, title, RANK() OVER (ORDER BY ts_rank_cd(...) DESC) as rank
+    FROM documents
+    WHERE to_tsvector(...) @@ plainto_tsquery('english', $2)
+    LIMIT 50
+)
+SELECT
+    COALESCE(s.id, k.id) as id,
+    COALESCE(1.0 / (60 + s.rank), 0.0) + COALESCE(1.0 / (60 + k.rank), 0.0) as score
+FROM semantic_search s
+FULL OUTER JOIN keyword_search k ON s.id = k.id
+ORDER BY score DESC
+```
+
+* It runs both searches in parallel.
+* It assigns a score to each document based on its rank in *both* lists.
+* A document that appears near the top of *both* lists gets a much higher score than one that only appears in one.
+* This ensures that the final results are both semantically relevant and contain the specific terms the user is looking for.
+
 ### Notebook Q&A with RAG (Retrieval-Augmented Generation)
 
 The Q&A feature uses RAG to efficiently answer questions about notebook content:
@@ -108,6 +213,24 @@ The Q&A feature uses RAG to efficiently answer questions about notebook content:
 2. **Vector Similarity Search**: Using pgvector's cosine similarity operator, the system queries the vector database to find the top 5 most relevant documents from the notebook based on semantic similarity to the question.
 3. **Context Assembly**: The system combines the notebook's user-written notes with the content of the most relevant documents.
 4. **LLM Answer Generation**: Only the filtered, relevant context is sent to GPT-4o-mini along with the question, ensuring efficient token usage and high-quality answers.
+
+    ```javascript
+    // src/routes/notebooks.js (Simplified)
+    const embedding = await getEmbedding(question);
+    
+    // Find relevant documents in this notebook
+    const { rows: relevantDocs } = await pool.query(
+      `SELECT content FROM documents d
+       JOIN notebook_documents nd ON d.id = nd.document_id
+       WHERE nd.notebook_id = $1
+       ORDER BY d.embedding <=> $2 LIMIT 5`,
+      [notebookId, pgvector.toSql(embedding)]
+    );
+
+    // Combine context and ask OpenAI
+    const context = relevantDocs.map(d => d.content).join('\n\n');
+    const answer = await getAnswerFromContext(question, context);
+    ```
 
 This approach scales well with large notebooks and provides more accurate answers by focusing on the most pertinent information.
 

@@ -66,7 +66,7 @@ function SearchResultsPage() {
             <Link to={`/documents/${result.id}`} className="search-result-link">
               <h3>{result.title}</h3>
               <div className="search-result-meta">
-                <span>Score: {result.score ? result.score.toFixed(4) : 'N/A'}</span>
+                <span>Score: {result.score ? Number(result.score).toFixed(4) : 'N/A'}</span>
                 <span> | </span>
                 <span>Created: {new Date(result.created_at).toLocaleDateString()}</span>
               </div>

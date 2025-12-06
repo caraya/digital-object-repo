@@ -84,6 +84,53 @@ The entire application is containerized using Docker and managed with Docker Com
 - **Frontend**: Access the web application at `http://localhost:5173` (or your configured Vite port).
 - **Backend API**: The API is available at `http://localhost:3001` (or your configured backend port).
 
+## Database Management
+
+The project includes scripts to help you manage your data.
+
+### Exporting Data
+
+To export the current state of the database, run:
+
+```bash
+npm run db:export
+```
+
+This will create an `exports/` directory in the project root containing:
+
+- **JSON files**: One file per table (e.g., `documents_2025-12-05.json`).
+- **SQL Dump**: A full PostgreSQL dump file (e.g., `full_dump_2025-12-05.sql`).
+
+### Importing Data (JSON)
+
+To import data from a JSON export file back into the database:
+
+```bash
+npm run db:import <path-to-json-file> [table-name]
+```
+
+Examples:
+
+```bash
+# Auto-detect table name from filename
+npm run db:import exports/documents_2025-12-05.json
+
+# Explicitly specify table name
+npm run db:import exports/my_data.json documents
+```
+
+**Note**: The import script handles `pgvector` columns and uses `ON CONFLICT DO NOTHING` to avoid overwriting existing records with the same ID.
+
+### Restoring from SQL Dump
+
+To restore the full database from a SQL dump, use the `psql` command line tool (or a GUI like pgAdmin).
+
+If running via Docker:
+
+```bash
+cat exports/full_dump_2025-12-05.sql | docker-compose exec -T postgres psql -U <DB_USER> -d <DB_DATABASE>
+```
+
 ## Project Structure
 
 ```text
