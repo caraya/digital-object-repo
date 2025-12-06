@@ -126,6 +126,17 @@ function DocumentDetailPage() {
   const youTubeId = getYouTubeId(document.source_url);
   const isVideo = document.mime_type && document.mime_type.startsWith('video/');
   const isFile = !document.source_url;
+  const isPdf = document.mime_type === 'application/pdf' || (document.source_url && document.source_url.toLowerCase().endsWith('.pdf'));
+
+  let pdfUrl = null;
+  if (isPdf) {
+    if (document.source_url) {
+      pdfUrl = document.source_url;
+    } else if (document.file_path) {
+       // file_path is stored as "uploads/filename.pdf", we serve it at "/uploads/filename.pdf"
+       pdfUrl = "/" + document.file_path;
+    }
+  }
 
   return (
     <div className="document-detail-container">
@@ -173,6 +184,20 @@ function DocumentDetailPage() {
           <video controls src={`/api/documents/${document.id}/download`} type={document.mime_type} key={document.id}>
             Your browser does not support the video tag.
           </video>
+        </div>
+      )}
+
+      {isPdf && pdfUrl && (
+        <div className="pdf-container">
+          <iframe
+            src={pdfUrl}
+            width="100%"
+            height="100%"
+            style={{ border: 'none' }}
+            title="PDF Viewer"
+          >
+            <p>Your browser does not support PDFs. <a href={pdfUrl}>Download the PDF</a>.</p>
+          </iframe>
         </div>
       )}
 

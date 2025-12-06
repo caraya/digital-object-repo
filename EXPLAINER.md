@@ -26,9 +26,10 @@ graph TD
         E[OpenAI API]
     end
 
-    A --"HTTP API Calls"--> B
-    D --"Serves UI"--> A
-    B --"Stores/Retrieves Data & Vectors"--> C
+    A --"API Calls (proxied via Vite)"--> D
+    D --"Serves UI & Proxies API calls"--> A
+    D --"Forwards API requests"--> B
+    B --"Stores/Retrieves Data & Vectors<br>RAG Similarity Search"--> C
     B --"For Embeddings, Summaries, Q&A"--> E
 ```
 
@@ -97,26 +98,38 @@ The "Notebooks" feature was the most significant addition, allowing users to gro
     * `GET /api/notebooks`: List all notebooks.
     * `POST /api/notebooks`: Create a new notebook.
     * `POST /api/notebooks/:id/documents`: Add a document to a notebook.
-    * `POST /api/notebooks/:id/query`: The core Q&A endpoint.
+    * `POST /api/notebooks/:id/query`: The core Q&A endpoint using Retrieval-Augmented Generation (RAG).
 
-### Notebook Q&A Sequence Flow
+### Notebook Q&A with RAG (Retrieval-Augmented Generation)
 
-This diagram illustrates how a user's question is processed to generate an answer.
+The Q&A feature uses RAG to efficiently answer questions about notebook content:
+
+1. **Question Embedding**: When a user asks a question, the system generates a vector embedding for the question using OpenAI's `text-embedding-ada-002` model.
+2. **Vector Similarity Search**: Using pgvector's cosine similarity operator, the system queries the vector database to find the top 5 most relevant documents from the notebook based on semantic similarity to the question.
+3. **Context Assembly**: The system combines the notebook's user-written notes with the content of the most relevant documents.
+4. **LLM Answer Generation**: Only the filtered, relevant context is sent to GPT-4o-mini along with the question, ensuring efficient token usage and high-quality answers.
+
+This approach scales well with large notebooks and provides more accurate answers by focusing on the most pertinent information.
+
+This diagram illustrates how a user's question is processed using Retrieval-Augmented Generation (RAG) to provide accurate answers based on the notebook's content.
 
 ```mermaid
 sequenceDiagram
     participant User
     participant ReactUI as "NotebookDetailPage"
     participant Backend as "Fastify API (/notebooks/:id/query)"
-    participant DB as "PostgreSQL"
+    participant DB as "PostgreSQL + pgvector"
     participant OpenAI
 
     User->>ReactUI: Enters question and clicks "Ask"
     ReactUI->>Backend: POST /api/notebooks/{id}/query with question
-    Backend->>DB: 1. Get notebook details
-    Backend->>DB: 2. Get all documents associated with the notebook
-    DB-->>Backend: Return document contents
-    Backend->>OpenAI: 3. Send documents' content and user's question to GPT-4o-mini
+    Backend->>OpenAI: 1. Generate embedding for the question
+    OpenAI-->>Backend: Return question embedding
+    Backend->>DB: 2. Vector similarity search for relevant documents
+    DB-->>Backend: Return top 5 most similar documents
+    Backend->>DB: 3. Get notebook details and notes
+    DB-->>Backend: Return notebook content
+    Backend->>OpenAI: 4. Send question + relevant context to GPT-4o-mini
     OpenAI-->>Backend: Return AI-generated answer
     Backend-->>ReactUI: Send answer back to the client
     ReactUI->>User: Display the answer

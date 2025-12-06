@@ -35,6 +35,16 @@
   height: 100%;
 }
 
+.pdf-container {
+  height: 800px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  width: 95vw;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 .document-content {
   white-space: pre-wrap; /* Allows text to wrap */
   word-wrap: break-word; /* Breaks long words */

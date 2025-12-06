@@ -18,19 +18,24 @@ async function routes(fastify, options) {
         return reply.status(500).send({ error: 'Failed to scrape URL' });
       }
 
-      const { title, content } = scrapedData;
+      const { title, content, mimeType } = scrapedData;
 
       // Truncate content to avoid exceeding OpenAI's token limit
       const truncatedContent = content.substring(0, 15000);
 
-      const embedding = await getEmbedding(truncatedContent);
-      if (!embedding) {
-        return reply.status(500).send({ error: 'Failed to generate embedding' });
+      let embedding = null;
+      if (truncatedContent && truncatedContent.trim().length > 0) {
+        embedding = await getEmbedding(truncatedContent);
+        if (!embedding) {
+          return reply.status(500).send({ error: 'Failed to generate embedding' });
+        }
+      } else {
+        logger.warn(`No content extracted for URL: ${url}`);
       }
 
       const { rows } = await pool.query(
         'INSERT INTO documents (title, content, embedding, source_url, mime_type) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [title || url, truncatedContent, pgvector.toSql(embedding), url, 'text/html']
+        [title || url, truncatedContent, embedding ? pgvector.toSql(embedding) : null, url, mimeType]
       );
 
       return reply.status(201).send(rows[0]);

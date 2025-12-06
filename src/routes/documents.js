@@ -93,7 +93,8 @@ async function routes(fastify, options) {
   });
 
   fastify.post('/documents/search', async (request, reply) => {
-    const { query } = request.body;
+    const { query, page = 1, limit = 10 } = request.body;
+    const offset = (page - 1) * limit;
 
     if (!query) {
       return reply.status(400).send({ error: 'Query is required' });
@@ -106,13 +107,40 @@ async function routes(fastify, options) {
       }
 
       const vector = pgvector.toSql(embedding);
-      const { rows } = await pool.query(
-        `SELECT id, title, created_at, (embedding <=> $1) AS distance 
-         FROM documents 
-         ORDER BY distance ASC 
-         LIMIT 5`,
-        [vector]
-      );
+      
+      // Hybrid search using Reciprocal Rank Fusion (RRF)
+      const sql = `
+        WITH semantic_search AS (
+            SELECT id, title, created_at, RANK() OVER (ORDER BY embedding <=> $1) as rank
+            FROM documents
+            ORDER BY embedding <=> $1
+            LIMIT 50
+        ),
+        keyword_search AS (
+            SELECT id, title, created_at, RANK() OVER (ORDER BY ts_rank_cd(to_tsvector('english', title || ' ' || COALESCE(content, '')), plainto_tsquery('english', $2)) DESC) as rank
+            FROM documents
+            WHERE to_tsvector('english', title || ' ' || COALESCE(content, '')) @@ plainto_tsquery('english', $2)
+            LIMIT 50
+        )
+        SELECT
+            COALESCE(s.id, k.id) as id,
+            COALESCE(s.title, k.title) as title,
+            COALESCE(s.created_at, k.created_at) as created_at,
+            COALESCE(1.0 / (60 + s.rank), 0.0) + COALESCE(1.0 / (60 + k.rank), 0.0) as score
+        FROM semantic_search s
+        FULL OUTER JOIN keyword_search k ON s.id = k.id
+        ORDER BY score DESC
+        LIMIT $3 OFFSET $4
+      `;
+
+      const { rows } = await pool.query(sql, [vector, query, limit, offset]);
+      
+      // Get total count for pagination (approximate based on the subqueries limits)
+      // For a true count we'd need a separate query or window function over the full join, 
+      // but for now let's just return the rows and maybe a "hasMore" flag if we requested limit + 1
+      
+      // To get a real count of matches is expensive with hybrid. 
+      // Let's just return the rows for now. The frontend can handle "Next" if rows.length === limit.
 
       return reply.send(rows);
 

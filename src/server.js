@@ -1,5 +1,8 @@
 import Fastify from 'fastify';
 import multipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import config from './config/index.js';
 import logger from './logger.js';
 import urlRoutes from './routes/urls.js';
@@ -7,6 +10,9 @@ import documentRoutes from './routes/documents.js';
 import usageRoutes from './routes/usage.js';
 import notebookRoutes from './routes/notebooks.js';
 import textRoutes from './routes/texts.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const fastify = Fastify({
   logger: true,
@@ -17,6 +23,12 @@ fastify.register(multipart, {
     fileSize: 50 * 1024 * 1024, // 50MB
   },
 });
+
+fastify.register(fastifyStatic, {
+  root: path.join(__dirname, '../uploads'),
+  prefix: '/uploads/',
+});
+
 fastify.register(urlRoutes, { prefix: '/api' });
 fastify.register(documentRoutes, { prefix: '/api' });
 fastify.register(usageRoutes, { prefix: '/api' });

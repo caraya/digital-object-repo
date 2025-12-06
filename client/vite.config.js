@@ -12,7 +12,12 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://app:3000', // Proxy API requests to the backend
+        target: 'http://app:3000', // Proxy API requests to the backend service
+        changeOrigin: true,
+        secure: false,
+      },
+      '/uploads': {
+        target: 'http://app:3000', // Proxy static file requests to the backend service
         changeOrigin: true,
         secure: false,
       },

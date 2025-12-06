@@ -116,81 +116,86 @@ function NotebookDetailPage() {
       <h1>{notebook.title}</h1>
       <p className="notebook-meta">Last updated: {new Date(notebook.updated_at).toLocaleString()}</p>
 
-      <div className="notebook-content-section">
-        <h2>Notes</h2>
-        {isEditing ? (
-          <div className="editing-area">
-            <textarea
-              ref={textareaRef}
-              value={editedContent}
-              onChange={(e) => setEditedContent(e.target.value)}
-              className="notes-textarea"
-            />
-            <div className="editing-controls">
-              <button onClick={handleSave} className="save-button">Save</button>
-              <button onClick={() => setIsEditing(false)} className="cancel-button">Cancel</button>
-            </div>
+      <div className="notebook-layout">
+        {/* Left Column: Grouped Items */}
+        <div className="grouped-documents-section layout-column">
+          <h2>Grouped Items ({notebook.documents?.length || 0})</h2>
+          <div className="grouped-items-list">
+            {notebook.documents && notebook.documents.length > 0 ? (
+              notebook.documents.map(doc => (
+                <div key={doc.id} className="grouped-item-card">
+                  <Link to={`/documents/${doc.id}`}>
+                    <h4>{doc.title}</h4>
+                    <p>Added: {new Date(doc.created_at).toLocaleDateString()}</p>
+                  </Link>
+                  <button onClick={() => handleRemoveDocument(doc.id)} className="remove-doc-button">
+                    &times;
+                  </button>
+                </div>
+              ))
+            ) : (
+              <p>No items have been added to this notebook yet.</p>
+            )}
           </div>
-        ) : (
-          <div>
-            <button onClick={() => setIsEditing(true)} className="edit-button">Edit Notes</button>
-            <div className="content-box">
-              {notebook.content ? (
-                <ReactMarkdown>{notebook.content}</ReactMarkdown>
-              ) : (
-                <p className="placeholder-text">No notes yet. Click 'Edit Notes' to add some.</p>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
 
-      <div className="grouped-documents-section">
-        <h2>Grouped Items ({notebook.documents?.length || 0})</h2>
-        <div className="grouped-items-list">
-          {notebook.documents && notebook.documents.length > 0 ? (
-            notebook.documents.map(doc => (
-              <div key={doc.id} className="grouped-item-card">
-                <Link to={`/documents/${doc.id}`}>
-                  <h4>{doc.title}</h4>
-                  <p>Added: {new Date(doc.created_at).toLocaleDateString()}</p>
-                </Link>
-                <button onClick={() => handleRemoveDocument(doc.id)} className="remove-doc-button">
-                  &times;
-                </button>
+        {/* Center Column: Notes */}
+        <div className="notebook-content-section layout-column">
+          <h2>Notes</h2>
+          {isEditing ? (
+            <div className="editing-area">
+              <textarea
+                ref={textareaRef}
+                value={editedContent}
+                onChange={(e) => setEditedContent(e.target.value)}
+                className="notes-textarea"
+              />
+              <div className="editing-controls">
+                <button onClick={handleSave} className="save-button">Save</button>
+                <button onClick={() => setIsEditing(false)} className="cancel-button">Cancel</button>
               </div>
-            ))
+            </div>
           ) : (
-            <p>No items have been added to this notebook yet.</p>
+            <div>
+              <button onClick={() => setIsEditing(true)} className="edit-button">Edit Notes</button>
+              <div className="content-box">
+                {notebook.content ? (
+                  <ReactMarkdown>{notebook.content}</ReactMarkdown>
+                ) : (
+                  <p className="placeholder-text">No notes yet. Click 'Edit Notes' to add some.</p>
+                )}
+              </div>
+            </div>
           )}
         </div>
-      </div>
 
-      <div className="qna-section">
-        <h2>Ask a Question About This Notebook</h2>
-        <form onSubmit={handleAskQuestion} className="qna-form">
-          <textarea
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            placeholder="Ask a question based on the content of your notes and grouped items..."
-            className="notes-textarea"
-            rows="3"
-          />
-          <button type="submit" disabled={queryStatus === 'loading'}>
-            {queryStatus === 'loading' ? 'Thinking...' : 'Ask Question'}
-          </button>
-        </form>
+        {/* Right Column: Q&A */}
+        <div className="qna-section layout-column">
+          <h2>Ask a Question</h2>
+          <form onSubmit={handleAskQuestion} className="qna-form">
+            <textarea
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              placeholder="Ask a question based on the content of your notes and grouped items..."
+              className="notes-textarea"
+              rows="3"
+            />
+            <button type="submit" disabled={queryStatus === 'loading'}>
+              {queryStatus === 'loading' ? 'Thinking...' : 'Ask Question'}
+            </button>
+          </form>
 
-        {queryStatus === 'loading' && <p>Getting your answer...</p>}
-        {queryStatus === 'error' && <div className="error-message">{queryError}</div>}
-        {queryStatus === 'success' && answer && (
-          <div className="answer-section">
-            <h3>Answer</h3>
-            <div className="content-box">
-              <ReactMarkdown>{answer}</ReactMarkdown>
+          {queryStatus === 'loading' && <p>Getting your answer...</p>}
+          {queryStatus === 'error' && <div className="error-message">{queryError}</div>}
+          {queryStatus === 'success' && answer && (
+            <div className="answer-section">
+              <h3>Answer</h3>
+              <div className="content-box">
+                <ReactMarkdown>{answer}</ReactMarkdown>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

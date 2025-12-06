@@ -165,28 +165,39 @@ async function routes(fastify, options) {
     }
 
     try {
-      // 1. Fetch the notebook's own notes
+      // 1. Generate embedding for the question
+      const questionEmbedding = await getEmbedding(question);
+      if (!questionEmbedding) {
+        return reply.status(500).send({ error: 'Failed to generate embedding for the question.' });
+      }
+
+      // 2. Fetch the notebook's own notes
       const notebookRes = await pool.query('SELECT content FROM notebooks WHERE id = $1', [id]);
       if (notebookRes.rows.length === 0) {
         return reply.status(404).send({ error: 'Notebook not found' });
       }
       const notebookNotes = notebookRes.rows[0].content || '';
 
-      // 2. Fetch the content of all documents in the notebook
+      // 3. Perform vector similarity search to find the most relevant documents
+      // Use pgvector's cosine similarity operator <=> and get top 5 most similar documents
+      const vectorQuery = pgvector.toSql(questionEmbedding);
       const documentsRes = await pool.query(
-        `SELECT title, content FROM documents d
+        `SELECT d.title, d.content, 1 - (d.embedding <=> $1) as similarity
+         FROM documents d
          JOIN notebook_documents nd ON d.id = nd.document_id
-         WHERE nd.notebook_id = $1`,
-        [id]
+         WHERE nd.notebook_id = $2 AND d.embedding IS NOT NULL
+         ORDER BY d.embedding <=> $1
+         LIMIT 5`,
+        [vectorQuery, id]
       );
-      
-      // 3. Compile the context
+
+      // 4. Compile the context from notebook notes and relevant documents
       let context = `Notebook Notes:\n${notebookNotes}\n\n---\n\n`;
       documentsRes.rows.forEach(doc => {
-        context += `Document: ${doc.title}\nContent:\n${doc.content}\n\n---\n\n`;
+        context += `Document: ${doc.title} (Similarity: ${(doc.similarity * 100).toFixed(1)}%)\nContent:\n${doc.content}\n\n---\n\n`;
       });
 
-      // 4. Get the answer from the AI service
+      // 5. Get the answer from the AI service using the filtered context
       const answer = await getAnswerFromContext(question, context);
 
       if (!answer) {

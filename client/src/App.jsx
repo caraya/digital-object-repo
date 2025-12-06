@@ -9,6 +9,7 @@ import DocumentDetailPage from './pages/DocumentDetailPage';
 import UsagePage from './pages/UsagePage';
 import NotebooksPage from './pages/NotebooksPage';
 import NotebookDetailPage from './pages/NotebookDetailPage';
+import SearchResultsPage from './pages/SearchResultsPage';
 import './App.css';
 import './components/TextForm.css';
 
@@ -38,6 +39,7 @@ function App() {
         <h1>Digital Object Repository</h1>
         <nav>
           <Link to="/">Home</Link>
+          <Link to="/search">Search</Link>
           <Link to="/notebooks">Notebooks</Link>
           <Link to="/usage">Usage</Link>
         </nav>
@@ -45,6 +47,7 @@ function App() {
       <main>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/documents/:id" element={<DocumentDetailPage />} />
           <Route path="/usage" element={<UsagePage />} />
           <Route path="/notebooks" element={<NotebooksPage />} />

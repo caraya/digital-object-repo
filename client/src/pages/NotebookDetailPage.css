@@ -1,24 +1,56 @@
 .notebook-detail-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* Make container take full viewport height */
   padding: 20px;
 }
 
 .notebook-detail-container h1 {
   margin-top: 10px;
+  flex-shrink: 0; /* Prevent h1 from shrinking */
 }
 
 .notebook-meta {
   font-size: 0.9em;
   color: #666;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
+  flex-shrink: 0; /* Prevent meta from shrinking */
+}
+
+.notebook-layout {
+  display: flex;
+  flex-grow: 1; /* Allow layout to fill available space */
+  gap: 20px;
+  overflow: hidden; /* Prevent overall layout from scrolling */
+}
+
+.layout-column {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto; /* Allow individual columns to scroll */
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+/* Column widths */
+.grouped-documents-section {
+  flex: 1; /* 1 part of the space */
 }
 
 .notebook-content-section {
-  margin-bottom: 40px;
+  flex: 2; /* 2 parts of the space, making it the largest */
 }
+
+.qna-section {
+  flex: 1.5; /* 1.5 parts of the space */
+}
+
 
 .editing-area {
   display: flex;
   flex-direction: column;
+  flex-grow: 1;
 }
 
 .notes-textarea {
@@ -31,7 +63,7 @@
   font-size: 1em;
   line-height: 1.6;
   resize: vertical;
-  overflow-y: hidden; /* Prevents scrollbar flicker during auto-resize */
+  flex-grow: 1; /* Allow textarea to grow */
 }
 
 .editing-controls {
@@ -68,13 +100,9 @@
   font-style: italic;
 }
 
-.grouped-documents-section {
-  margin-top: 30px;
-}
-
 .grouped-items-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 15px;
 }
 
@@ -130,12 +158,6 @@
   opacity: 1;
 }
 
-.qna-section {
-  margin-top: 40px;
-  padding-top: 30px;
-  border-top: 2px solid #eee;
-}
-
 .qna-form {
   display: flex;
   flex-direction: column;
@@ -163,4 +185,15 @@
 
 .answer-section {
   margin-top: 20px;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.content-box {
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  flex-grow: 1;
+  overflow-y: auto;
 }

@@ -1,6 +1,5 @@
-# ---- Build Stage ----
-# Use a full Node.js image to build the app
-FROM node:24 AS builder
+# Use a full Node.js image to build and run the app
+FROM node:24
 
 # Set the working directory
 WORKDIR /usr/src/app
@@ -8,28 +7,19 @@ WORKDIR /usr/src/app
 # Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install
+# Install Playwright browsers and their dependencies
+RUN npx playwright install --with-deps
 
 # Copy the rest of the application source code
 COPY . .
 
-# ---- Production Stage ----
-# Use a minimal, more secure Node.js image for the final image
-FROM node:24-slim
-
-# Set the working directory
-WORKDIR /usr/src/app
-
 # Create a non-root user for better security
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 appuser
+RUN chown -R appuser:nodejs /usr/src/app
+
+# Switch to the non-root user
 USER appuser
-
-# Copy dependencies and package files from the 'builder' stage
-COPY --from=builder /usr/src/app/node_modules ./node_modules
-COPY --from=builder /usr/src/app/package*.json ./
-
-# Copy application code from the 'builder' stage
-COPY --from=builder /usr/src/app .
 
 # Expose the port
 EXPOSE ${PORT}
