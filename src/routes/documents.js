@@ -51,8 +51,24 @@ async function routes(fastify, options) {
         for (let i = 1; i <= doc.numPages; i++) {
           const page = await doc.getPage(i);
           const content = await page.getTextContent();
-          const strings = content.items.map(item => item.str);
-          text += strings.join(' ') + '\n';
+          
+          let lastY;
+          let pageText = '';
+          for (const item of content.items) {
+            const currentY = item.transform[5];
+            if (lastY !== undefined) {
+              const yDiff = Math.abs(currentY - lastY);
+              if (yDiff > 5) {
+                pageText += '\n';
+                if (yDiff > 15) pageText += '\n';
+              } else if (pageText.length > 0 && !pageText.endsWith(' ') && !item.str.startsWith(' ')) {
+                pageText += ' ';
+              }
+            }
+            pageText += item.str;
+            lastY = currentY;
+          }
+          text += pageText + '\n\n';
           if (text.length > MAX_DB_STORAGE_LENGTH) {
             break; 
           }
@@ -286,7 +302,19 @@ async function routes(fastify, options) {
 
     try {
       const { rows } = await pool.query(
-        'SELECT id, title, content, created_at, updated_at, file_path, source_url, mime_type FROM documents WHERE id = $1',
+        `SELECT 
+          d.id, d.title, d.content, d.created_at, d.updated_at, d.file_path, d.source_url, d.mime_type,
+          COALESCE(
+            json_agg(
+              json_build_object('id', n.id, 'title', n.title)
+            ) FILTER (WHERE n.id IS NOT NULL), 
+            '[]'
+          ) as notebooks
+         FROM documents d
+         LEFT JOIN notebook_documents nd ON d.id = nd.document_id
+         LEFT JOIN notebooks n ON nd.notebook_id = n.id
+         WHERE d.id = $1
+         GROUP BY d.id`,
         [id]
       );
 

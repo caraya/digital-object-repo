@@ -104,6 +104,25 @@ function DocumentDetailPage() {
     }
   };
 
+  const handleRemoveFromNotebook = async (notebookId) => {
+    if (window.confirm('Are you sure you want to remove this document from the notebook?')) {
+      try {
+        const response = await fetch(`/api/notebooks/${notebookId}/documents/${id}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) {
+          throw new Error('Failed to remove document from notebook');
+        }
+        // Refresh document data to update the list
+        const docResponse = await fetch(`/api/documents/${id}`);
+        const docData = await docResponse.json();
+        setDocument(docData);
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+  };
+
   const getYouTubeId = (url) => {
     if (!url) return null;
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -148,6 +167,22 @@ function DocumentDetailPage() {
         <p>Updated at: {new Date(document.updated_at).toLocaleString()}</p>
         {document.source_url && <p>Source: <a href={document.source_url} target="_blank" rel="noopener noreferrer">{document.source_url}</a></p>}
       </div>
+
+      {document.notebooks && document.notebooks.length > 0 && (
+        <div className="notebooks-list-section">
+          <h3>In Notebooks:</h3>
+          <ul className="notebooks-list">
+            {document.notebooks.map(nb => (
+              <li key={nb.id}>
+                <Link to={`/notebooks/${nb.id}`}>{nb.title}</Link>
+                <button onClick={() => handleRemoveFromNotebook(nb.id)} className="remove-notebook-link-button" title="Remove from notebook">
+                  &times;
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="document-actions">
         {document.source_url && (

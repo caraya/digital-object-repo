@@ -73,10 +73,10 @@ function UsagePage() {
               <tr key={log.id}>
                 <td>{new Date(log.created_at).toLocaleString()}</td>
                 <td>{log.model}</td>
-                <td>{log.prompt_tokens.toLocaleString()}</td>
+                <td>{(log.prompt_tokens || 0).toLocaleString()}</td>
                 <td>{(log.completion_tokens || 0).toLocaleString()}</td>
-                <td>{log.total_tokens.toLocaleString()}</td>
-                <td>${parseFloat(log.cost).toFixed(6)}</td>
+                <td>{(log.total_tokens || 0).toLocaleString()}</td>
+                <td>${(parseFloat(log.cost) || 0).toFixed(6)}</td>
               </tr>
             ))}
           </tbody>

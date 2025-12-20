@@ -27,7 +27,7 @@ const PRICING = {
  * @param {object} usage The usage data from the OpenAI API response.
  */
 const logApiUsage = async (model, usage) => {
-  const { prompt_tokens, completion_tokens, total_tokens } = usage;
+  const { prompt_tokens = 0, completion_tokens = 0, total_tokens = 0 } = usage || {};
   
   let cost = 0;
   if (PRICING[model]) {
